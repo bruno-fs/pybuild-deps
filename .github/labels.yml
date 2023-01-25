@@ -29,7 +29,7 @@
   description: New feature or request
   color: a2eeef
 - name: github_actions
-  description: Pull requests that update Github_actions code
+  description: Pull requests that update Github Actions code
   color: "000000"
 - name: good first issue
   description: Good for newcomers
@@ -49,16 +49,10 @@
 - name: question
   description: Further information is requested
   color: d876e3
-- name: refactoring
+- name: refat
   description: Refactoring
   color: ef67c4
-- name: removal
-  description: Removals and Deprecations
-  color: 9ae7ea
-- name: style
-  description: Style
-  color: c120e5
-- name: testing
+- name: test
   description: Testing
   color: b1fc6f
 - name: wontfix
