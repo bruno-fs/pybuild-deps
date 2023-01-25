@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pybuild-deps"
-version = "0.0.0"
+version = "0.0.1"
 description = "PyBuild Deps"
 authors = ["Bruno Ciconelle <fsouza.bruno@gmail.com>"]
 license = "GPL-3.0"
@@ -19,7 +19,7 @@ Changelog = "https://github.com/bruno-fs/pybuild-deps/releases"
 python = "^3.7"
 click = ">=8.0.1"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
 black = ">=21.10b0"
 coverage = {extras = ["toml"], version = ">=6.2"}
