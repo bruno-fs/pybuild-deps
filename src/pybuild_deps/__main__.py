@@ -5,7 +5,7 @@ import click
 @click.command()
 @click.version_option()
 def main() -> None:
-    """PyBuild Deps."""
+    """Entrypoint for PyBuild Deps."""
 
 
 if __name__ == "__main__":
