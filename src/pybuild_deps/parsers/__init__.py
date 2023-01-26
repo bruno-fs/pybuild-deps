@@ -7,6 +7,10 @@ try:
 except ImportError:
     import tomli as toml
 
+
+from .setup_py import parse_setup_py  # imported here for convenience
+
+
 def parse_pyproject_toml(content):
     """Parse build requirements from pyproject.toml files."""
     try:
