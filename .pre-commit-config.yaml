@@ -21,12 +21,6 @@ repos:
         entry: check-yaml
         language: system
         types: [yaml]
-      - id: darglint
-        name: darglint
-        entry: darglint
-        language: system
-        types: [python]
-        stages: [manual]
       - id: end-of-file-fixer
         name: Fix End of Files
         entry: end-of-file-fixer
@@ -39,21 +33,13 @@ repos:
         language: system
         types: [python]
         require_serial: true
-        args: [--darglint-ignore-regex, .*]
-      - id: isort
-        name: isort
-        entry: isort
-        require_serial: true
-        language: system
-        types_or: [cython, pyi, python]
-        args: ["--filter-files"]
-      - id: pyupgrade
-        name: pyupgrade
-        description: Automatically upgrade syntax for newer versions.
-        entry: pyupgrade
+        stages: [commit, push, manual]
+      - id: ruff
+        name: ruff
+        entry: ruff
         language: system
         types: [python]
-        args: [--py37-plus]
+        stages: [commit, push, manual]
       - id: trailing-whitespace
         name: Trim Trailing Whitespace
         entry: trailing-whitespace-fixer
