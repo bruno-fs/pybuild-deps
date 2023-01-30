@@ -5,6 +5,7 @@
 /.python-version
 /.pytype/
 /.tool-versions
+/.vscode/
 /dist/
 /docs/_build/
 /src/*.egg-info/
