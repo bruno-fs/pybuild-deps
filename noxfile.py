@@ -31,6 +31,7 @@ nox.options.sessions = (
     "xdoctest",
     "docs-build",
 )
+test_requirements = ["pytest", "pygments", "pytest-mock"]
 
 
 def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
@@ -142,7 +143,7 @@ def safety(session: Session) -> None:
 def tests(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
-    session.install("coverage[toml]", "pytest", "pygments")
+    session.install("coverage[toml]", *test_requirements)
     try:
         session.run("coverage", "run", "--parallel", "-m", "pytest", *session.posargs)
     finally:
@@ -167,7 +168,7 @@ def coverage(session: Session) -> None:
 def typeguard(session: Session) -> None:
     """Runtime type checking using Typeguard."""
     session.install(".")
-    session.install("pytest", "typeguard", "pygments")
+    session.install("typeguard", *test_requirements)
     session.run("pytest", f"--typeguard-packages={package}", *session.posargs)
 
 
