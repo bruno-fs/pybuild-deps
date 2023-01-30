@@ -48,7 +48,7 @@ def test_log_level(runner: CliRunner, mocker):
         ("urllib3", "1.26.13", []),
         (
             "cryptography",
-            "39.0.0",
+            "39",
             [
                 "setuptools>=40.6.0,!=60.9.0",
                 "wheel",

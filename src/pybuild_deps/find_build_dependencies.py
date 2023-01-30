@@ -19,8 +19,9 @@ def find_build_dependencies(package_name, version):
     build_dependencies = []
     with tarfile.open(fileobj=source_path.open("rb")) as tarball:
         for file_name, parser in file_parser_map.items():
+            root_dir = tarball.getnames()[0].split("/")[0]
             try:
-                file = tarball.extractfile(f"{package_name}-{version}/{file_name}")
+                file = tarball.extractfile(f"{root_dir}/{file_name}")
             except KeyError:
                 logging.info(
                     "%s file not found for package %s==%s",
