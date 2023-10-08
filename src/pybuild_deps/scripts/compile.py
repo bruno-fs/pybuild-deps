@@ -90,7 +90,7 @@ def get_compile_command(click_ctx):
     show_envvar=True,
     type=click.Path(file_okay=False, writable=True),
 )
-def cli(
+def compile(
     ctx: click.Context,
     verbose: int,
     quiet: int,

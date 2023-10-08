@@ -27,7 +27,7 @@ def find_build_deps(package_name, package_version, verbose):
         click.echo(dep)
 
 
-cli.add_command(compile.cli, "compile")
+cli.add_command(compile.compile, "compile")
 
 if __name__ == "__main__":
     cli(prog_name="pybuild-deps")  # pragma: no cover
