@@ -4,13 +4,12 @@ import logging
 from pathlib import Path
 
 import requests
-from xdg import xdg_cache_home
 
-CACHE_PATH = xdg_cache_home() / "pybuild-deps"
+from pybuild_deps.constants import CACHE_PATH
 
 
 def get_package_source(package_name: str, version: str) -> Path:
-    """Get ource code for a given package."""
+    """Get source code for a given package."""
     cached_path = CACHE_PATH / package_name / version
     tarball_path = cached_path / "source.tar.gz"
     error_path = cached_path / "error.json"
