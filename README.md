@@ -19,13 +19,19 @@
 [pre-commit]: https://github.com/pre-commit/pre-commit
 [black]: https://github.com/psf/black
 
+CLI tools to help dealing with python build dependencies. It aims to complement
+tools that can pin dependencies like `pip-tools` and `poetry`.
+For users relying exclusively on python wheels, those tools are more than enough.
+However, for users building applications from source, finding and pinning build dependencies
+is required for reproducible builds.
+
+`pybuild-tools` might be useful for developers that need to explicitly declare
+**all** dependencies for compliance reasons or supply chain concerns.
+
 ## Features
 
-- TODO
-
-## Requirements
-
-- TODO
+- find build dependencies for a given python package
+- generate pinned build requirements from requirements.txt files.
 
 ## Installation
 

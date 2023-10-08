@@ -1,44 +1,35 @@
 """Test cases for the __main__ module."""
 
+from os import chdir
 from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+from piptools.exceptions import PipToolsError
+from piptools.repositories import PyPIRepository
 
-from pybuild_deps import __main__
+from pybuild_deps import __main__ as main
+from pybuild_deps.compile_build_dependencies import BuildDependencyCompiler
+from pybuild_deps.constants import PIP_CACHE_DIR
+from pybuild_deps.parsers import parse_requirements
+
+
+@pytest.fixture
+def pypi_repo():
+    """PyPIRepository instance for testing."""
+    return PyPIRepository([], cache_dir=PIP_CACHE_DIR)
 
 
 @pytest.fixture
 def runner() -> CliRunner:
     """Fixture for invoking command-line interfaces."""
-    return CliRunner()
-
-
-@pytest.fixture
-def cache(monkeypatch, tmp_path):
-    """Mock pybuild-deps cache."""
-    mocked_cache = tmp_path / "cache"
-    monkeypatch.setattr("pybuild_deps.get_package_source.CACHE_PATH", mocked_cache)
-    yield mocked_cache
+    return CliRunner(mix_stderr=False)
 
 
 def test_main_succeeds(runner: CliRunner) -> None:
     """It exits with a status code of zero."""
-    result = runner.invoke(__main__.cli)
+    result = runner.invoke(main.cli)
     assert result.exit_code == 0
-
-
-def test_log_level(runner: CliRunner, mocker):
-    """Test setting log level."""
-    patched_logconfig = mocker.patch(
-        "pybuild_deps.__main__.logging.basicConfig", side_effect=RuntimeError("STOP!!!")
-    )
-    result = runner.invoke(
-        __main__.cli, ["--log-level", "INFO", "find-build-deps", "a", "b"]
-    )
-    assert result.exit_code == 1
-    assert isinstance(result.exception, RuntimeError)
-    assert patched_logconfig.call_args == mocker.call(level="INFO")
 
 
 @pytest.mark.e2e
@@ -63,11 +54,85 @@ def test_find_build_deps(
 ):
     """End to end testing for find-build-deps command."""
     assert not cache.exists()
-    result = runner.invoke(__main__.find_build_deps, args=[package_name, version])
+    result = runner.invoke(main.cli, args=["find-build-deps", package_name, version])
     assert result.exit_code == 0
     assert result.stdout.splitlines() == expected_deps
     assert cache.exists()
     # repeating the same test to cover a cached version
-    result = runner.invoke(__main__.find_build_deps, args=[package_name, version])
+    result = runner.invoke(main.cli, args=["find-build-deps", package_name, version])
     assert result.exit_code == 0
     assert result.stdout.splitlines() == expected_deps
+
+
+@pytest.mark.e2e
+def test_compile_greenpath(
+    runner: CliRunner, tmp_path: Path, pypi_repo: PyPIRepository
+):
+    """Test happy path for compile command."""
+    output = tmp_path / "requirements-build.txt"
+    requirements_path: Path = tmp_path / "requirements.txt"
+    requirements_path.write_text("cryptography==39.0.0")
+    result = runner.invoke(
+        main.cli, args=["compile", str(requirements_path), "-o", str(output)]
+    )
+    assert result.exit_code == 0
+    expected_packages = {"setuptools-rust", "setuptools-scm"}
+    build_requirements = list(parse_requirements(str(output), pypi_repo.session))
+    assert expected_packages.issubset({r.name for r in build_requirements})
+
+
+def test_compile_missing_requirements_txt(runner: CliRunner, tmp_path: Path):
+    """Test compile without a requirements.txt."""
+    chdir(tmp_path)
+    result = runner.invoke(main.cli, args=["compile"])
+    assert result.exit_code != 0
+    err_message = result.stderr.splitlines()[-1]
+
+    assert (
+        err_message == "Error: Invalid value: Couldn't find a 'requirements.txt'."
+        " You must specify at least one input file."
+    )
+
+
+@pytest.mark.e2e
+@pytest.mark.parametrize("args", ["--no-header", "--generate-hashes", "-v", "-q"])
+def test_compile_implicit_requirements_txt_and_non_default_options(
+    runner: CliRunner,
+    tmp_path: Path,
+    cache: Path,
+    args,
+):
+    """Exercise some options to ensure they are working."""
+    chdir(tmp_path)
+    requirements_path: Path = tmp_path / "requirements.txt"
+    requirements_path.write_text("setuptools-rust==1.6.0")
+    result = runner.invoke(main.cli, args=["compile", args])
+    assert result.exit_code == 0
+    assert {file.name for file in cache.glob("*")} == {"setuptools", "setuptools-rust"}
+
+
+def test_compile_not_pinned_requirements_txt(runner: CliRunner, tmp_path: Path):
+    """Ensure the appropriate error is thrown for non pinned requirements."""
+    chdir(tmp_path)
+    requirements_path: Path = tmp_path / "requirements.txt"
+    requirements_path.write_text("setuptools-rust<1")
+    result = runner.invoke(main.cli, args=["compile"])
+    assert result.exit_code == 2
+    assert (
+        result.stderr.splitlines()[-1]
+        == "requirement 'setuptools-rust<1 (from -r requirements.txt (line 1))' is not "
+        "exact (pybuild-tools only supports pinned dependencies)."
+    )
+
+
+def test_compile_unsolvable_dependencies(runner: CliRunner, tmp_path: Path, mocker):
+    """Test error handling for unsolvable dependencies."""
+    mocker.patch.object(
+        BuildDependencyCompiler, "resolve", side_effect=PipToolsError("SOME ERROR")
+    )
+    chdir(tmp_path)
+    requirements_path: Path = tmp_path / "requirements.txt"
+    requirements_path.write_text("setuptools-rust==1.6.0")
+    result = runner.invoke(main.cli, args=["compile"])
+    assert result.exit_code == 2
+    assert result.stderr.splitlines()[-1] == "SOME ERROR"

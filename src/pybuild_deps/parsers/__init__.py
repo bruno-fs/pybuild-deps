@@ -8,6 +8,7 @@ except ImportError:
     import tomli as toml
 
 
+from .requirements import parse_requirements
 from .setup_py import parse_setup_py  # imported here for convenience
 
 
