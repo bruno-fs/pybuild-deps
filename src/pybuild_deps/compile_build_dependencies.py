@@ -14,22 +14,9 @@ from pip._internal.req import InstallRequirement
 from pip._internal.req.constructors import install_req_from_req_string
 from piptools.repositories import PyPIRepository
 from piptools.resolver import BacktrackingResolver
-from piptools.utils import (
-    is_pinned_requirement,
-)
 
-from .exceptions import PyBuildDepsError
 from .finder import find_build_dependencies
-
-
-def get_version(ireq: InstallRequirement):
-    """Get version string from InstallRequirement."""
-    if not is_pinned_requirement(ireq):
-        raise PyBuildDepsError(
-            f"requirement '{ireq}' is not exact "
-            "(pybuild-tools only supports pinned dependencies)."
-        )
-    return next(iter(ireq.specifier)).version
+from .utils import get_version
 
 
 class BuildDependencyCompiler:
