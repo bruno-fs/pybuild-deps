@@ -1,4 +1,4 @@
-# PyBuild Deps
+# pybuild-deps
 
 [![PyPI](https://img.shields.io/pypi/v/pybuild-deps.svg)][pypi status]
 [![Status](https://img.shields.io/pypi/status/pybuild-deps.svg)][pypi status]
@@ -25,7 +25,7 @@ For users relying exclusively on python wheels, those tools are more than enough
 However, for users building applications from source, finding and pinning build dependencies
 is required for reproducible builds.
 
-`pybuild-tools` might be useful for developers that need to explicitly declare
+`pybuild-deps` might be useful for developers that need to explicitly declare
 **all** dependencies for compliance reasons or supply chain concerns.
 
 ## Features
@@ -35,7 +35,7 @@ is required for reproducible builds.
 
 ## Installation
 
-You can install _PyBuild Deps_ via [pip] from [PyPI]:
+You can install _pybuild-deps_ via [pip] from [PyPI]:
 
 ```console
 $ pip install pybuild-deps
