@@ -21,13 +21,14 @@ from pybuild_deps.exceptions import PyBuildDepsError
 
 def parse_requirements(
     filename: str,
-    session: PipSession,
+    session: PipSession = None,
     finder: PackageFinder | None = None,
     options: optparse.Values | None = None,
     constraint: bool = False,
     isolated: bool = False,
 ) -> Generator[InstallRequirement]:
     """Thin wrapper around pip's `parse_requirements`."""
+    session = session or PipSession()
     for parsed_req in _parse_requirements(
         filename, session, finder=finder, options=options, constraint=constraint
     ):
