@@ -6,6 +6,7 @@ from pathlib import Path
 import requests
 
 from pybuild_deps.constants import CACHE_PATH
+from pybuild_deps.exceptions import PyBuildDepsError
 
 
 def get_package_source(package_name: str, version: str) -> Path:
@@ -35,8 +36,7 @@ def retrieve_and_save_source_from_pypi(
     """Retrieve package source from pypi and store it in a cache."""
     source_url = get_source_url(package_name, version)
     response = requests.get(source_url, timeout=10)
-    if not response.ok:
-        raise NotImplementedError()
+    response.raise_for_status()
     tarball_path.parent.mkdir(parents=True, exist_ok=True)
     tarball_path.write_bytes(response.content)
     return tarball_path
@@ -47,8 +47,10 @@ def get_source_url(package_name, version):
     response = requests.get(
         f"https://pypi.org/pypi/{package_name}/{version}/json", timeout=10
     )
-    if not response.ok:
-        raise NotImplementedError()
+    response.raise_for_status()
     for url in response.json()["urls"]:  # pragma: no branch
         if url["python_version"] == "source":
             return url["url"]
+    raise PyBuildDepsError(
+        f"PyPI doesn't have the source code for package {package_name}=={version}"
+    )
