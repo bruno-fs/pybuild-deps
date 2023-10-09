@@ -1,5 +1,7 @@
 """Find build dependencies of a python package."""
 
+from __future__ import annotations
+
 import tarfile
 
 from .logger import log
@@ -7,7 +9,7 @@ from .parsers import parse_pyproject_toml, parse_setup_cfg, parse_setup_py
 from .source import get_package_source
 
 
-def find_build_dependencies(package_name, version):
+def find_build_dependencies(package_name, version) -> list[str]:
     """Find build dependencies for a given package."""
     file_parser_map = {
         "pyproject.toml": parse_pyproject_toml,

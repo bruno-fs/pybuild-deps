@@ -64,6 +64,26 @@ def test_find_build_deps(
     assert result.stdout.splitlines() == expected_deps
 
 
+@pytest.mark.parametrize(
+    "package_name,version,expected_error",
+    [
+        (
+            "tensorflow",
+            "2.14.0",
+            "PyPI doesn't have the source code for package tensorflow==2.14.0",
+        )
+    ],
+)
+def test_find_build_deps_error(
+    cache: Path, runner: CliRunner, package_name, version, expected_error
+):
+    """End to end testing for find-build-deps command."""
+    assert not cache.exists()
+    result = runner.invoke(main.cli, args=["find-build-deps", package_name, version])
+    assert result.exit_code == 2
+    assert result.stderr.splitlines()[-1] == expected_error
+
+
 @pytest.mark.e2e
 def test_compile_greenpath(
     runner: CliRunner, tmp_path: Path, pypi_repo: PyPIRepository

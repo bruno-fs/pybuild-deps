@@ -1,6 +1,10 @@
 """Command-line interface."""
 
+import sys
+
 import click
+
+from pybuild_deps.exceptions import PyBuildDepsError
 
 from .finder import find_build_dependencies
 from .logger import log
@@ -22,7 +26,13 @@ def find_build_deps(package_name, package_version, verbose):
     """Find build dependencies for given package."""
     log.verbosity = verbose
 
-    deps = find_build_dependencies(package_name=package_name, version=package_version)
+    try:
+        deps = find_build_dependencies(
+            package_name=package_name, version=package_version
+        )
+    except PyBuildDepsError as err:
+        log.error(str(err))
+        sys.exit(2)
     for dep in deps:
         click.echo(dep)
 
