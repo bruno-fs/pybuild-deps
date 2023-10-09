@@ -103,7 +103,7 @@ def compile(
     src_files: tuple[str, ...],
     cache_dir: str,
 ) -> None:
-    """Compiles build_requirements.txt from requirements.txt."""
+    """Compiles build-requirements.txt from requirements.txt."""
     log.verbosity = verbose - quiet
     if len(src_files) == 0:
         src_files = _handle_src_files()
