@@ -16,10 +16,10 @@ Changelog = "https://github.com/bruno-fs/pybuild-deps/releases"
 [tool.poetry.dependencies]
 python = "^3.8"
 click = ">=8.0.1"
-tomli = { version = "^2.0.1", python = "<3.11" }
+tomli = { version = "*", python = "<3.11" }
 xdg = "*"
 requests = "*"
-pip-tools = "^7.3.0"
+pip-tools = "^7.0.0"
 
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
