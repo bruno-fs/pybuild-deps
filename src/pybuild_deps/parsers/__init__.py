@@ -6,7 +6,7 @@ try:
     import tomllib as toml
 except ImportError:
     import tomli as toml
-
+import re
 
 from .requirements import parse_requirements
 from .setup_py import parse_setup_py  # imported here for convenience
@@ -29,4 +29,8 @@ def parse_setup_cfg(content):
     except KeyError:
         return []
 
-    return [req.strip() for req in build_requirements.strip().splitlines()]
+    return [
+        r.strip()
+        for req in build_requirements.strip().splitlines()
+        for r in re.split(";|,", req.strip())
+    ]
