@@ -71,7 +71,12 @@ def test_find_build_deps(
             "tensorflow",
             "2.14.0",
             "PyPI doesn't have the source code for package tensorflow==2.14.0",
-        )
+        ),
+        (
+            "grpcio",
+            "1.59.0",
+            "Unable to parse setup.py for package grpcio==1.59.0.",
+        ),
     ],
 )
 def test_find_build_deps_error(

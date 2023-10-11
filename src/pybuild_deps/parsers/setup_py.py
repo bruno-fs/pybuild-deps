@@ -6,6 +6,12 @@ import ast
 import operator
 from contextlib import suppress
 
+from ..exceptions import PyBuildDepsError
+
+
+class SetupPyParsingError(PyBuildDepsError):
+    """Error class to be used when a setup.py can't be parsed."""
+
 
 def attrgetter(attr, obj):
     """Get attribute from object.
@@ -23,14 +29,17 @@ def parse_setup_py(content: str):
     It attempts to cover more conventional use cases only.
     See its tests to have a better idea of what's supported.
     """
-    code_tree = ast.parse(content)
-    setup_expr = _get_setup_expr(code_tree)
-    if setup_expr is None:
-        # module don't have a setup/setuptools.setup
-        return []
+    try:
+        code_tree = ast.parse(content)
+        setup_expr = _get_setup_expr(code_tree)
+        if setup_expr is None:
+            # module don't have a setup/setuptools.setup
+            return []
 
-    setup_requires_ast = _get_setup_requires(setup_expr)
-    return _resolve_deps(setup_requires_ast, code_tree)
+        setup_requires_ast = _get_setup_requires(setup_expr)
+        return _resolve_deps(setup_requires_ast, code_tree)
+    except (NotImplementedError, SyntaxError) as err:
+        raise SetupPyParsingError from err
 
 
 def _get_setup_expr(module: ast.Module) -> ast.Expr | None:
