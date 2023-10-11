@@ -15,6 +15,17 @@ setup_requires =
     bar
 """
 
+EXAMPLE_CFG_COMMA = """
+[metadata]
+name = foo
+
+[options]
+# comments are not supported inside keywords
+setup_requires = foo; bar
+    bla, ble
+"""
+
+
 EXAMPLE_CFG_WO_SETUP_REQUIRES = """
 [metadata]
 name = foo
@@ -28,7 +39,11 @@ install_requires =
 
 @pytest.mark.parametrize(
     "setup_cfg,expected_result",
-    [(EXAMPLE_CFG, ["foo", "bar"]), (EXAMPLE_CFG_WO_SETUP_REQUIRES, [])],
+    [
+        (EXAMPLE_CFG, ["foo", "bar"]),
+        (EXAMPLE_CFG_COMMA, ["foo", "bar", "bla", "ble"]),
+        (EXAMPLE_CFG_WO_SETUP_REQUIRES, []),
+    ],
 )
 def test_parse_setup_cfg(setup_cfg, expected_result):
     """Test parsing build requirements from setup.cfg."""
