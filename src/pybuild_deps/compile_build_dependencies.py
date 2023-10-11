@@ -36,7 +36,9 @@ class BuildDependencyCompiler:
         constraint_qty = len(constraints)
         for req in install_requirements:
             req_version = get_version(req)
-            raw_build_dependencies = find_build_dependencies(req.name, req_version)
+            raw_build_dependencies = find_build_dependencies(
+                req.name, req_version, raise_setuppy_parsing_exc=False
+            )
             for raw_build_req in raw_build_dependencies:
                 build_req = install_req_from_req_string(
                     raw_build_req, comes_from=req.name

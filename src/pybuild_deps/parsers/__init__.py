@@ -9,7 +9,10 @@ except ImportError:
 import re
 
 from .requirements import parse_requirements
-from .setup_py import parse_setup_py  # imported here for convenience
+from .setup_py import (
+    SetupPyParsingError,
+    parse_setup_py,
+)
 
 
 def parse_pyproject_toml(content):

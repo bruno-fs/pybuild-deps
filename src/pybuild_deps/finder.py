@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import tarfile
 
+from pybuild_deps.parsers.setup_py import SetupPyParsingError
+
 from .logger import log
 from .parsers import parse_pyproject_toml, parse_setup_cfg, parse_setup_py
 from .source import get_package_source
 
 
-def find_build_dependencies(package_name, version) -> list[str]:
+def find_build_dependencies(
+    package_name, version, raise_setuppy_parsing_exc=True
+) -> list[str]:
     """Find build dependencies for a given package."""
     file_parser_map = {
         "pyproject.toml": parse_pyproject_toml,
@@ -32,5 +36,26 @@ def find_build_dependencies(package_name, version) -> list[str]:
             log.debug(
                 f"parsing file {file_name} for package {package_name}=={version}",
             )
-            build_dependencies += parser(file.read().decode())
+            # utf-8-sig is required due to a very odd edge case I found with
+            # package msal==1.24.1: it had a non printable character U+FEFF, which
+            # was causing a SyntaxError when using ast to parse this setup.py.
+            # utf-8-sig is a variant of UTF-8 invented by microsoft, so it kinda
+            # makes sense this package had this encoding (msal is from microsoft).
+            # No regression was found after running this with a large number of python
+            # packages, so making this exception apply to all packages seem to be fine.
+            file_contents = file.read().decode("utf-8-sig")
+            try:
+                build_dependencies += parser(file_contents)
+            except SetupPyParsingError:
+                error_msg = (
+                    f"Unable to parse setup.py for package {package_name}=={version}."
+                )
+                if not raise_setuppy_parsing_exc:
+                    log.error(error_msg)
+                log.debug("{:=^80}".format(" setup.py contents "))
+                log.debug(file_contents)
+                log.debug("=" * 80)
+                if raise_setuppy_parsing_exc:
+                    raise SetupPyParsingError(error_msg)  # noqa: B904
+
     return build_dependencies
