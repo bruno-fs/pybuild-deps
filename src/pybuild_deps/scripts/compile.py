@@ -11,7 +11,6 @@ import click
 from click.utils import LazyFile
 from pip._internal.req import InstallRequirement
 from piptools.exceptions import PipToolsError
-from piptools.locations import CACHE_DIR
 from piptools.repositories import PyPIRepository
 from piptools.utils import get_compile_command as _get_compile_command
 from piptools.utils import (
@@ -22,6 +21,7 @@ from piptools.writer import OutputWriter
 from pybuild_deps.compile_build_dependencies import (
     BuildDependencyCompiler,
 )
+from pybuild_deps.constants import PIP_CACHE_DIR
 from pybuild_deps.exceptions import PyBuildDepsError
 from pybuild_deps.logger import log
 from pybuild_deps.parsers import parse_requirements
@@ -84,8 +84,7 @@ def get_compile_command(click_ctx):
 @click.option(
     "--cache-dir",
     help="Store the cache data in DIRECTORY.",
-    default=CACHE_DIR,
-    envvar="PIP_TOOLS_CACHE_DIR",
+    default=PIP_CACHE_DIR,
     show_default=True,
     show_envvar=True,
     type=click.Path(file_okay=False, writable=True),
@@ -101,7 +100,7 @@ def compile(
     output_file: LazyFile | IO[Any] | None,
     generate_hashes: bool,
     src_files: tuple[str, ...],
-    cache_dir: str,
+    cache_dir: Path,
 ) -> None:
     """Compiles build-requirements.txt from requirements.txt."""
     log.verbosity = verbose - quiet
