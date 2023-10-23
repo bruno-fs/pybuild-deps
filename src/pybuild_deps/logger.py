@@ -7,6 +7,7 @@ import logging
 from typing import Any
 
 import click
+from piptools.logging import log as piptools_logger
 
 logging.basicConfig()
 _logger = logging.getLogger("pybuild-deps")
@@ -37,6 +38,8 @@ class Logger:
             _logger.setLevel(logging.INFO)
         if self._verbosity >= 1:
             _logger.setLevel(logging.DEBUG)
+        # keep piptools logger verbosity in sync with ours
+        piptools_logger.verbosity = value
 
     def log(self, level: int, message: str, *args: Any, **kwargs: Any) -> None:
         if self.as_library:
