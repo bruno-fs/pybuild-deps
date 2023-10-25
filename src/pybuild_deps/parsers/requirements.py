@@ -12,11 +12,9 @@ from pip._internal.req import parse_requirements as _parse_requirements
 from pip._internal.req.constructors import (
     install_req_from_parsed_requirement,
 )
-from piptools.utils import (
-    is_pinned_requirement,
-)
 
 from pybuild_deps.exceptions import PyBuildDepsError
+from pybuild_deps.utils import is_pinned_requirement
 
 
 def parse_requirements(

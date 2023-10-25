@@ -47,6 +47,16 @@ def test_main_succeeds(runner: CliRunner) -> None:
                 "setuptools-rust>=0.11.4",
             ],
         ),
+        (
+            "cryptography",
+            "git+https://github.com/pyca/cryptography@41.0.5",
+            [
+                "setuptools>=61.0.0",
+                "wheel",
+                "cffi>=1.12; platform_python_implementation != 'PyPy'",
+                "setuptools-rust>=0.11.4",
+            ],
+        ),
     ],
 )
 def test_find_build_deps(
@@ -76,6 +86,16 @@ def test_find_build_deps(
             "grpcio",
             "1.59.0",
             "Unable to parse setup.py for package grpcio==1.59.0.",
+        ),
+        (
+            "some-package",
+            "git+https://example.com",
+            "Unsupported requirement (some-package @ git+https://example.com). Url requirements must use a VCS scheme like 'git+https'.",  # noqa: E501
+        ),
+        (
+            "cryptography",
+            "git+https://github.com/pyca/cryptography",
+            "Unsupported requirement (cryptography @ git+https://github.com/pyca/cryptography). Url requirements must use a VCS scheme like 'git+https'.",  # noqa: E501
         ),
     ],
 )
