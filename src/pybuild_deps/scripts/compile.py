@@ -120,7 +120,7 @@ def compile(
     try:
         results = compiler.resolve(dependencies)
         hashes = compiler.resolver.resolve_hashes(results) if generate_hashes else None
-    except PipToolsError as e:
+    except (PipToolsError, PyBuildDepsError) as e:
         log.error(str(e))
         sys.exit(2)
 
