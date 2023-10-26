@@ -10,11 +10,14 @@ from __future__ import annotations
 
 from typing import Iterable
 
+from pip._internal.exceptions import DistributionNotFound
 from pip._internal.req import InstallRequirement
 from pip._internal.req.constructors import install_req_from_req_string
+from pip._vendor.resolvelib.resolvers import ResolutionImpossible
 from piptools.repositories import PyPIRepository
 from piptools.resolver import BacktrackingResolver
 
+from .exceptions import UnsolvableDependenciesError
 from .finder import find_build_dependencies
 from .utils import get_version
 
@@ -51,7 +54,15 @@ class BuildDependencyCompiler:
             repository=self.repository,
             allow_unsafe=True,
         )
-        build_dependencies = self.resolver.resolve()
+        try:
+            build_dependencies = self.resolver.resolve()
+        except DistributionNotFound as err:
+            if isinstance(err.__cause__, ResolutionImpossible):  # pragma: no cover
+                unsolvable_deps = err.__cause__.args
+                raise UnsolvableDependenciesError(  # noqa: B904
+                    unsolvable_deps, constraints
+                )
+            raise err
         # dependencies of build dependencies might have their own build dependencies,
         # so let's recursively search for those.
         while len(build_dependencies) != constraint_qty:
