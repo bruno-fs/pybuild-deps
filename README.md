@@ -10,16 +10,16 @@
 [![Codecov](https://codecov.io/gh/bruno-fs/pybuild-deps/branch/main/graph/badge.svg)][codecov]
 
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)][pre-commit]
-[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)][black]
+[![Ruff codestyle][ruff badge]][ruff project]
+
 
 [pypi status]: https://pypi.org/project/pybuild-deps/
-[read the docs]: https://pybuild-deps.readthedocs.io/
 [tests]: https://github.com/bruno-fs/pybuild-deps/actions?workflow=Tests
 [codecov]: https://app.codecov.io/gh/bruno-fs/pybuild-deps
 [pre-commit]: https://github.com/pre-commit/pre-commit
 [black]: https://github.com/psf/black
-
-CLI tools to help dealing with python build dependencies. It aims to complement
+[ruff badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+[ruff project]: https://github.com/charliermarsh/ruff
 tools that can pin dependencies like `pip-tools` and `poetry`.
 For users relying exclusively on python wheels, those tools are more than enough.
 However, for users building applications from source, finding and pinning build dependencies

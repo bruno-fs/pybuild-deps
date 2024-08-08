@@ -9,8 +9,10 @@ from textwrap import dedent
 
 import nox
 
+
 try:
-    from nox_poetry import Session, session
+    from nox_poetry import Session
+    from nox_poetry import session
 except ImportError:
     message = f"""\
     Nox failed to import the 'nox-poetry' package.
@@ -22,8 +24,7 @@ except ImportError:
 
 
 package = "pybuild_deps"
-python_versions = ["3.11", "3.10", "3.9", "3.8"]
-nox.needs_version = ">= 2021.6.6"
+python_versions = ["3.12", "3.11", "3.10", "3.9", "3.8"]
 nox.options.sessions = (
     "pre-commit",
     "safety",
@@ -45,7 +46,7 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
     Args:
         session: The Session object.
     """
-    assert session.bin is not None  # noqa: S101
+    assert session.bin is not None  # nosec
 
     # Only patch hooks containing a reference to this session's bindir. Support
     # quoting rules for Python and bash, but strip the outermost quotes so we
@@ -119,13 +120,10 @@ def precommit(session: Session) -> None:
         "--show-diff-on-failure",
     ]
     session.install(
-        "black",
-        "darglint",
-        "flake8",
-        "flake8-rst-docstrings",
+        "ruff",
         "pre-commit",
         "pre-commit-hooks",
-        "ruff",
+        "pydoclint",
     )
     session.run("pre-commit", *args)
     if args and args[0] == "install":

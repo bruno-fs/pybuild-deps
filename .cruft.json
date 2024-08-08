@@ -1,0 +1,21 @@
+{
+  "template": "https://github.com/bruno-fs/cookiecutter-hypermodern-python",
+  "commit": "6e269e4d703f1e10f38c65a323b48cbe2980e9d3",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "pybuild-deps",
+      "package_name": "pybuild_deps",
+      "friendly_name": "PyBuild Deps",
+      "author": "Bruno Ciconelle",
+      "email": "fsouza.bruno@gmail.com",
+      "github_user": "bruno-fs",
+      "version": "0.2.0",
+      "copyright_year": "2023",
+      "license": "GPL-3.0",
+      "development_status": "Development Status :: 3 - Alpha",
+      "_template": "https://github.com/bruno-fs/cookiecutter-hypermodern-python"
+    }
+  },
+  "directory": null
+}
