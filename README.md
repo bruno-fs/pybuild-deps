@@ -12,7 +12,6 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)][pre-commit]
 [![Ruff codestyle][ruff badge]][ruff project]
 
-
 [pypi status]: https://pypi.org/project/pybuild-deps/
 [tests]: https://github.com/bruno-fs/pybuild-deps/actions?workflow=Tests
 [codecov]: https://app.codecov.io/gh/bruno-fs/pybuild-deps
@@ -20,6 +19,7 @@
 [black]: https://github.com/psf/black
 [ruff badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
 [ruff project]: https://github.com/charliermarsh/ruff
+
 tools that can pin dependencies like `pip-tools` and `poetry`.
 For users relying exclusively on python wheels, those tools are more than enough.
 However, for users building applications from source, finding and pinning build dependencies

@@ -4,6 +4,7 @@ import pytest
 
 from pybuild_deps.parsers import parse_setup_py
 
+
 SIMPLE = """
 from setuptools import setup
 
