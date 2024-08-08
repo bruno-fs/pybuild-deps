@@ -1,4 +1,5 @@
 """Sphinx configuration."""
+
 project = "PyBuild Deps"
 author = "Bruno Ciconelle"
 copyright = "2023, Bruno Ciconelle"

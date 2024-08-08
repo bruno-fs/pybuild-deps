@@ -57,5 +57,5 @@ def find_build_dependencies(
                 log.debug("=" * 80)
                 if raise_setuppy_parsing_exc:
                     raise SetupPyParsingError(error_msg)  # noqa: B904
-
+    log.debug(f"found build dependencies: {build_dependencies}")
     return build_dependencies

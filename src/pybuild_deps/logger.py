@@ -1,4 +1,5 @@
 """custom logger for pybuild-deps."""
+
 # ruff: noqa: D102
 
 from __future__ import annotations
