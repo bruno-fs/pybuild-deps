@@ -26,6 +26,7 @@ from pybuild_deps.exceptions import PyBuildDepsError
 from pybuild_deps.logger import log
 from pybuild_deps.parsers import parse_requirements
 
+
 REQUIREMENTS_TXT = "requirements.txt"
 
 

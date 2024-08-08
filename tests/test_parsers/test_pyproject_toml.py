@@ -6,6 +6,7 @@ import pytest
 
 from pybuild_deps.parsers import parse_pyproject_toml
 
+
 EXAMPLE_TOML = """
 [build-system]
 requires = [

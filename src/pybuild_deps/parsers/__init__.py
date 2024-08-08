@@ -2,6 +2,7 @@
 
 from configparser import ConfigParser
 
+
 try:
     import tomllib as toml
 except ImportError:

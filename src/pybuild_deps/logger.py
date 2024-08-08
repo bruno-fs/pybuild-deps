@@ -10,6 +10,7 @@ from typing import Any
 import click
 from piptools.logging import log as piptools_logger
 
+
 logging.basicConfig()
 _logger = logging.getLogger("pybuild-deps")
 
