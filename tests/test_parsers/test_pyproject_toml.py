@@ -1,4 +1,5 @@
 """Test pyproject toml parser."""
+
 from __future__ import annotations
 
 import pytest
