@@ -1,5 +1,11 @@
 """custom exceptions for pybuild-deps."""
 
+from __future__ import annotations
+
+from typing import Iterable
+
+from pip._vendor.resolvelib.resolvers import RequirementInformation
+
 
 class PyBuildDepsError(Exception):
     """Custom exception for pybuild-deps."""
@@ -8,20 +14,19 @@ class PyBuildDepsError(Exception):
 class UnsolvableDependenciesError(PyBuildDepsError):
     """Unsolvable dependencies."""
 
-    def __init__(self, unsolvable_deps, constraints) -> None:
+    def __init__(
+        self,
+        package: str,
+        unsolvable_deps: Iterable[Iterable[RequirementInformation]],
+    ):
         self.unsolvable_deps = unsolvable_deps
-        self.constraints = constraints
+        self.package = package
 
     def __str__(self):
-        packages = {req_list[0].requirement.name for req_list in self.unsolvable_deps}
-        packages |= {p.replace("-", "_") for p in packages}
-        packages |= {p.replace("_", "-") for p in packages}
-        unsolvable_deps = []
-        for constraint in self.constraints:
-            if constraint.name in packages:
-                unsolvable_deps.append(constraint)
-        unsolvable_deps = "\n".join(str(p) for p in unsolvable_deps)
+        unsolvable_deps = "\n".join(
+            str(d.requirement) for deps in self.unsolvable_deps for d in deps
+        )
         return (
-            "Impossible resolve dependencies. See the conflicting dependencies "
-            f"below:\n{unsolvable_deps}"
+            f"Impossible to resolve the following dependencies for package "
+            f"'{self.package}':\n{unsolvable_deps}"
         )
