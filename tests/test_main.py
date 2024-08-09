@@ -192,11 +192,12 @@ def test_compile_unsolvable_dependencies(runner: CliRunner, tmp_path: Path, mock
     outfile = tmp_path / "outfile"
     mocker.patch(
         "pybuild_deps.compile_build_dependencies.find_build_dependencies",
-        return_value=["bar>=42", "bar<42"],
+        return_value=["setuptools>=42", "setuptools<42"],
     )
     result = runner.invoke(main.cli, args=["compile", "-o", str(outfile)])
     assert result.exit_code == 2
     assert (
-        "Impossible resolve dependencies. See the conflicting dependencies "
-        "below:\nbar>=42 (from foo)\nbar<42 (from foo)" in result.stderr
+        "Impossible to resolve the following dependencies for package 'foo==0.1.2':\n"
+        "setuptools>=42\n"
+        "setuptools<42" in result.stderr
     )

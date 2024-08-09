@@ -8,6 +8,7 @@ of build dependencies.
 
 from __future__ import annotations
 
+from functools import partial
 from typing import Iterable
 
 from pip._internal.exceptions import DistributionNotFound
@@ -42,49 +43,66 @@ class BuildDependencyCompiler:
             log.info(str(ireq))
             log.info("-" * 80)
             req_version = get_version(ireq)
-            version_tuple = ireq.name, req_version
-            if version_tuple in self.dependency_cache:
-                all_build_deps.extend(self.dependency_cache[version_tuple])
+            ireq_name = f"{ireq.name}=={req_version}"
+            if ireq_name in self.dependency_cache:
+                all_build_deps.extend(self.dependency_cache[ireq_name])
                 log.debug(f"{ireq} exists in our cache, moving on...")
                 continue
             raw_build_dependencies = find_build_dependencies(
                 ireq.name, req_version, raise_setuppy_parsing_exc=False
             )
             if not raw_build_dependencies:
-                self.dependency_cache[version_tuple] = set()
+                self.dependency_cache[ireq_name] = set()
                 continue
-
-            constraints = []
-            for raw_build_req in raw_build_dependencies:
-                build_req = install_req_from_req_string(
-                    raw_build_req, comes_from=ireq.name
-                )
-                constraints.append(build_req)
-            # override resolver - we only want the latest and greatest
-            self.resolver = BacktrackingResolver(
-                constraints=constraints,
-                existing_constraints={},
-                repository=self.repository,
-                allow_unsafe=True,
+            # 'find_build_dependencies' is very naive - by design - and only returns
+            # a simple list of strings representing build (or transitive) dependencies.
+            # We will use the excellent resolver from piptools to find dependencies of
+            # build dependencies, but first we need to convert our list of requirements
+            # to the format used by piptools
+            build_ireqs = map(
+                partial(install_req_from_req_string, comes_from=ireq.name),
+                raw_build_dependencies,
             )
-            try:
-                build_dependencies = self.resolver.resolve()
-            except DistributionNotFound as err:
-                if isinstance(err.__cause__, ResolutionImpossible):  # pragma: no cover
-                    unsolvable_deps = err.__cause__.args
-                    raise UnsolvableDependenciesError(  # noqa: B904
-                        unsolvable_deps, constraints
-                    )
-                raise err
+            build_dependencies = self._resolve_with_piptools(
+                package=ireq_name, ireqs=build_ireqs
+            )
             # dependencies of build dependencies might have their own build
             # dependencies, so let's recursively search for those.
             build_deps_qty = 0
             while len(build_dependencies) != build_deps_qty:
                 build_deps_qty = len(build_dependencies)
                 build_dependencies |= set(self.resolve(build_dependencies))
-            self.dependency_cache[version_tuple] = build_dependencies
+            self.dependency_cache[ireq_name] = build_dependencies
+
             all_build_deps.extend(build_dependencies)
+
         return deduplicate_install_requirements(all_build_deps)
+
+    def _resolve_with_piptools(
+        self, package: str, ireqs: Iterable[InstallRequirement]
+    ) -> set[InstallRequirement]:
+        # backup unsafe data before overriding resolver, we will need it later
+        # on piptools writer to export the file
+        unsafe_packages = getattr(self.resolver, "unsafe_packages", set())
+        unsafe_constraints = getattr(self.resolver, "unsafe_constraints", set())
+        # override resolver - we only want the latest and greatest
+        self.resolver = BacktrackingResolver(
+            constraints=ireqs,
+            existing_constraints={},
+            repository=self.repository,
+            allow_unsafe=True,
+        )
+        try:
+            requirements = self.resolver.resolve()
+        except DistributionNotFound as err:
+            if isinstance(err.__cause__, ResolutionImpossible):  # pragma: no branch
+                raise UnsolvableDependenciesError(package, err.__cause__.args)  # noqa: B904
+            # TODO: We don't know how to reproduce the condition below, or even know if
+            # it is possible.
+            raise err  # pragma: no cover
+        self.resolver.unsafe_packages |= unsafe_packages
+        self.resolver.unsafe_constraints |= unsafe_constraints
+        return requirements
 
 
 def deduplicate_install_requirements(ireqs: Iterable[InstallRequirement]):
