@@ -9,7 +9,7 @@ from pybuild_deps.utils import get_version, is_pinned_requirement
 @pytest.mark.parametrize(
     "req",
     [
-        "requests==X.Y.Z",
+        "requests==1.2.3",
         "requests @ git+https://github.com/psf/requests@some-commit-sha",
     ],
 )
@@ -22,7 +22,7 @@ def test_is_pinned_or_vcs(req):
 @pytest.mark.parametrize(
     "req",
     [
-        "requests>X.Y.Z",
+        "requests>1.2.3",
         "requests @ git+https://github.com/psf/requests",
         "requests @ https://example.com",
         "requests @ https://github.com/psf/requests@some-commit-sha",

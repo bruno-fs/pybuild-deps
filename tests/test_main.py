@@ -183,17 +183,20 @@ def test_compile_piptools_error(runner: CliRunner, tmp_path: Path, mocker):
     assert result.stderr.splitlines()[-1] == "SOME ERROR"
 
 
-@pytest.mark.e2e
-def test_compile_unsolvable_dependencies(runner: CliRunner, tmp_path: Path):
+def test_compile_unsolvable_dependencies(runner: CliRunner, tmp_path: Path, mocker):
     """Test error handling for exceptions raised by pip-tools."""
     chdir(tmp_path)
-    requirements = ["typer==0.9.0", "tomli==2.0.1", "urllib3==2.0.7"]
+    requirements = ["foo==0.1.2"]
     requirements_path: Path = tmp_path / "requirements.txt"
     requirements_path.write_text("\n".join(requirements))
     outfile = tmp_path / "outfile"
+    mocker.patch(
+        "pybuild_deps.compile_build_dependencies.find_build_dependencies",
+        return_value=["bar>=42", "bar<42"],
+    )
     result = runner.invoke(main.cli, args=["compile", "-o", str(outfile)])
     assert result.exit_code == 2
     assert (
-        "Impossible resolve dependencies. See the conflicting dependencies below:"
-        in result.stderr
+        "Impossible resolve dependencies. See the conflicting dependencies "
+        "below:\nbar>=42 (from foo)\nbar<42 (from foo)" in result.stderr
     )
