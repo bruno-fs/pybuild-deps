@@ -8,7 +8,7 @@
       "package_name": "pybuild_deps",
       "friendly_name": "PyBuild Deps",
       "author": "Bruno Ciconelle",
-      "email": "fsouza.bruno@gmail.com",
+      "email": "bciconel@redhat.com",
       "github_user": "bruno-fs",
       "version": "0.2.0",
       "copyright_year": "2023",
