@@ -8,7 +8,7 @@ from piptools.repositories import PyPIRepository
 
 from pybuild_deps.compile_build_dependencies import BuildDependencyCompiler
 from pybuild_deps.constants import PIP_CACHE_DIR
-from pybuild_deps.exceptions import PyBuildDepsError
+from pybuild_deps.exceptions import PyBuildDepsError, UnsolvableDependenciesError
 
 
 @pytest.fixture
@@ -41,3 +41,15 @@ def test_dependency_with_complex_setup_py(compiler, caplog):
     ireq = install_req_from_req_string("grpcio==1.59.0")
     compiler.resolve([ireq])
     assert caplog.messages[-1] == "Unable to parse setup.py for package grpcio==1.59.0."
+
+
+def test_unsolvable_dependencies(compiler):
+    """Test trying to solve impossible dependency combinations."""
+    ireqs = map(install_req_from_req_string, ("setuptools<42", "setuptools>=42"))
+
+    expected_error_msg = (
+        "Impossible to resolve the following dependencies for package 'foo=1.2.3':"
+        "\nsetuptools<42\nsetuptools>=42"
+    )
+    with pytest.raises(UnsolvableDependenciesError, match=expected_error_msg):
+        compiler._resolve_with_piptools("foo=1.2.3", ireqs)
