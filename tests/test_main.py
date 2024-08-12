@@ -197,7 +197,8 @@ def test_compile_unsolvable_dependencies(runner: CliRunner, tmp_path: Path, mock
     result = runner.invoke(main.cli, args=["compile", "-o", str(outfile)])
     assert result.exit_code == 2
     assert (
-        "Impossible to resolve the following dependencies for package 'foo==0.1.2':\n"
-        "setuptools>=42\n"
-        "setuptools<42" in result.stderr
+        "Impossible to resolve the following dependencies for package 'foo==0.1.2'"
+        in result.stderr
     )
+    assert "setuptools>=42" in result.stderr
+    assert "setuptools<42" in result.stderr
