@@ -8,8 +8,7 @@ of build dependencies.
 
 from __future__ import annotations
 
-from functools import partial
-from typing import Iterable
+from typing import Generator, Iterable
 
 from pip._internal.exceptions import DistributionNotFound
 from pip._internal.req import InstallRequirement
@@ -52,33 +51,22 @@ class BuildDependencyCompiler:
             log.info("=" * 80)
             log.info(str(ireq))
             log.info("-" * 80)
-            req_version = get_version(ireq)
-            ireq_name = f"{ireq.name}=={req_version}"
-            if ireq_name in dependency_cache:
-                all_build_deps.extend(dependency_cache[ireq_name])
-                log.debug(f"{ireq} was already solved, moving on...")
+            req_str = str(ireq.req)
+            if req_str in dependency_cache:
+                all_build_deps.extend(dependency_cache[req_str])
+                log.debug(f"{ireq.req} was already solved, moving on...")
                 continue
-            raw_build_dependencies = find_build_dependencies(
-                ireq.name, req_version, raise_setuppy_parsing_exc=False
-            )
-            if not raw_build_dependencies:
-                dependency_cache[ireq_name] = set()
+            build_ireqs = set(self._find_build_dependencies(ireq))
+            if not build_ireqs:
+                dependency_cache[req_str] = set()
                 continue
-            # 'find_build_dependencies' is very naive - by design - and only returns
-            # a simple list of strings representing build (or transitive) dependencies.
-            # We will use the excellent resolver from piptools to find dependencies of
-            # build dependencies, but first we need to convert our list of requirements
-            # to the format used by piptools
-            build_ireqs = map(
-                partial(install_req_from_req_string, comes_from=ireq.name),
-                raw_build_dependencies,
-            )
             try:
                 # Attempt to resolve ireq's transitive dependencies using
-                # runtime requirements as constraint. This is equivalent to
-                # running "pip install -c constraints-file.txt".
+                # runtime requirements as constraint. This is same concept of
+                # "constraint" that can be used with pip, like when running
+                # "pip install -c constraints.txt some-package"
                 build_dependencies = self._resolve_with_piptools(
-                    package=ireq_name,
+                    package=req_str,
                     ireqs=build_ireqs,
                     constraints=existing_constraints,
                 )
@@ -92,7 +80,7 @@ class BuildDependencyCompiler:
                 # If this step fails, the same exception will bubble up and explode
                 # in an error.
                 build_dependencies = self._resolve_with_piptools(
-                    package=ireq_name,
+                    package=req_str,
                     ireqs=build_ireqs,
                 )
 
@@ -106,8 +94,11 @@ class BuildDependencyCompiler:
                     existing_constraints=existing_constraints,
                     dependency_cache=dependency_cache,
                 )
+                build_dependencies = deduplicate_install_requirements(
+                    build_dependencies
+                )
 
-            dependency_cache[ireq_name] = build_dependencies
+            dependency_cache[req_str] = build_dependencies
 
             all_build_deps.extend(build_dependencies)
 
@@ -117,7 +108,7 @@ class BuildDependencyCompiler:
         self,
         package: str,
         ireqs: Iterable[InstallRequirement],
-        constraints: set[InstallRequirement],
+        constraints: dict[InstallRequirement] | None = None,
     ) -> set[InstallRequirement]:
         # backup unsafe data before overriding resolver, we will need it later
         # on piptools writer to export the file
@@ -126,7 +117,7 @@ class BuildDependencyCompiler:
         # override resolver - we don't want references from other
         self.resolver = BacktrackingResolver(
             constraints=ireqs,
-            existing_constraints=constraints,
+            existing_constraints=constraints or {},
             repository=self.repository,
             allow_unsafe=True,
         )
@@ -142,20 +133,35 @@ class BuildDependencyCompiler:
         self.resolver.unsafe_constraints |= unsafe_constraints
         return requirements
 
+    def _find_build_dependencies(
+        self,
+        ireq: InstallRequirement,
+    ) -> Generator[InstallRequirement]:
+        """Find build dependencies for a given ireq."""
+        ireq_version = get_version(ireq)
+        for build_dep in find_build_dependencies(
+            ireq.name, ireq_version, raise_setuppy_parsing_exc=False
+        ):
+            # The original 'find_build_dependencies' function is very naive by design.
+            # It only returns a simple list of strings representing builds dependencies.
+            # In order to feed those to piptools resolver, those strings need to be
+            # converted to InstallRequirements.
+            yield install_req_from_req_string(build_dep, comes_from=ireq.name)
+
 
 def deduplicate_install_requirements(ireqs: Iterable[InstallRequirement]):
     """Deduplicate InstallRequirements."""
     unique_ireqs = {}
     for ireq in ireqs:
-        version_tuple = ireq.name, get_version(ireq)
-        if version_tuple not in unique_ireqs:
+        req_tuple = ireq.name, get_version(ireq)
+        if req_tuple not in unique_ireqs:
             # NOTE: piptools hacks pip's InstallRequirement to allow support from
             # multiple sources. Let's use the same attr so piptools file writer can
             # use this information.
             # https://github.com/jazzband/pip-tools/blob/53309647980e2a4981db54c0033f98c61142de0b/piptools/resolver.py#L118-L122
             # https://github.com/jazzband/pip-tools/blob/53309647980e2a4981db54c0033f98c61142de0b/piptools/writer.py#L309-L314
             ireq._source_ireqs = getattr(ireq, "_source_ireqs", [ireq])
-            unique_ireqs[version_tuple] = ireq
+            unique_ireqs[req_tuple] = ireq
         else:
-            unique_ireqs[version_tuple]._source_ireqs.append(ireq)
+            unique_ireqs[req_tuple]._source_ireqs.append(ireq)
     return set(unique_ireqs.values())
