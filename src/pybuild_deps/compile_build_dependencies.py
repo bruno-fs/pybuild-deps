@@ -56,34 +56,13 @@ class BuildDependencyCompiler:
                 all_build_deps.extend(dependency_cache[req_str])
                 log.debug(f"{ireq.req} was already solved, moving on...")
                 continue
-            build_ireqs = set(self._find_build_dependencies(ireq))
-            if not build_ireqs:
+            # resolve ireq's build dependencies
+            build_dependencies = self._resolve_build_deps_for_ireq(
+                ireq, existing_constraints
+            )
+            if not build_dependencies:
                 dependency_cache[req_str] = set()
                 continue
-            try:
-                # Attempt to resolve ireq's transitive dependencies using
-                # runtime requirements as constraint. This is same concept of
-                # "constraint" that can be used with pip, like when running
-                # "pip install -c constraints.txt some-package"
-                build_dependencies = self._resolve_with_piptools(
-                    package=req_str,
-                    ireqs=build_ireqs,
-                    constraints=existing_constraints,
-                )
-            except UnsolvableDependenciesError:
-                # Being unsolvable on the previous step doesn't mean a transitive
-                # dependency is actually unsolvable. Per PEP-517, transitive
-                # dependencies are built in isolated environments. We only
-                # try building with constraints to avoid ending up with an unnecessarily
-                # large list of dependencies to manage.
-
-                # If this step fails, the same exception will bubble up and explode
-                # in an error.
-                build_dependencies = self._resolve_with_piptools(
-                    package=req_str,
-                    ireqs=build_ireqs,
-                )
-
             # dependencies of build dependencies might have their own build
             # dependencies, so let's recursively search for those.
             build_deps_qty = 0
@@ -103,6 +82,54 @@ class BuildDependencyCompiler:
             all_build_deps.extend(build_dependencies)
 
         return deduplicate_install_requirements(all_build_deps)
+
+    def _resolve_build_deps_for_ireq(
+        self,
+        ireq: InstallRequirement,
+        constraints: dict[str, InstallRequirement],
+    ) -> set[InstallRequirement]:
+        # find build dependencies for ireq
+        build_ireqs = set(self._find_build_dependencies(ireq))
+        if not build_ireqs:
+            return set()
+        # build_ireqs isn't a comprehensive list of dependencies yet.
+        # They represent exclusively the build requirements which are most
+        # likely not even pinned yet. For instance, consider a package with the
+        # following section on pyproject.toml:
+        #
+        # [build-system]
+        # requires = ["poetry-core>=1.0.0"]
+        #
+        # For ireq representing the package above, build_ireqs would be equivalent to
+        # {"poetry-core>=1.0.0"}. We don't want that. We want a set of pinned
+        # dependencies and all it's runtime dependencies as well.
+        #
+        # Now we need to resolve a version for the build dependencies and also find
+        # which packages they depend on. Following the example above, we would need to
+        # find what is required to install poetry-core and resolve a version of it.
+        try:
+            # Attempt to resolve ireq's transitive dependencies using
+            # runtime requirements as constraint. This is same concept of
+            # "constraint" that can be used with pip, like when running
+            # "pip install -c constraints.txt some-package"
+            return self._resolve_with_piptools(
+                package=str(ireq.req),
+                ireqs=build_ireqs,
+                constraints=constraints,
+            )
+        except UnsolvableDependenciesError:
+            # Being unsolvable on the previous step doesn't mean a transitive
+            # dependency is actually unsolvable. Per PEP-517, transitive
+            # dependencies are built in isolated environments. We only
+            # try building with constraints to avoid ending up with an unnecessarily
+            # large list of dependencies to manage.
+
+            # If this step fails, the same exception will bubble up and explode
+            # in an error.
+            return self._resolve_with_piptools(
+                package=str(ireq.req),
+                ireqs=build_ireqs,
+            )
 
     def _resolve_with_piptools(
         self,
