@@ -10,22 +10,21 @@ from pybuild_deps.exceptions import PyBuildDepsError
 
 def get_version(ireq: InstallRequirement):
     """Get version string from InstallRequirement."""
-    if not is_pinned_requirement(ireq):
-        raise PyBuildDepsError(
-            f"requirement '{ireq}' is not exact "
-            "(pybuild-tools only supports pinned dependencies)."
-        )
-    if ireq.link and ireq.link.is_vcs:
+    if not is_supported_requirement(ireq):
+        raise PyBuildDepsError(f"requirement '{ireq}' is not exact.")
+    if ireq.req.url:
         return ireq.req.url
     return next(iter(ireq.specifier)).version
 
 
-def is_pinned_requirement(ireq: InstallRequirement):
-    """Returns True if requirement is pinned or vcs."""
-    return _is_pinned_requirement(ireq) or is_pinned_vcs(ireq)
+def is_supported_requirement(ireq: InstallRequirement):
+    """Returns True if requirement is pinned, vcs poiting to a SHA or a direct url."""
+    return (
+        _is_pinned_requirement(ireq) or _is_pinned_vcs(ireq) or _is_non_vcs_link(ireq)
+    )
 
 
-def is_pinned_vcs(ireq: InstallRequirement):
+def _is_pinned_vcs(ireq: InstallRequirement):
     """Check if given ireq is a pinned vcs dependency."""
     if not ireq.link:
         return False
@@ -37,3 +36,9 @@ def is_pinned_vcs(ireq: InstallRequirement):
     # some_project.git@da39a3ee5e6b4b0d3255bfef95601890afd80709
     # https://pip.pypa.io/en/latest/topics/vcs-support/
     return parts == 2
+
+
+def _is_non_vcs_link(ireq: InstallRequirement):
+    if not ireq.link:
+        return False
+    return not ireq.link.is_vcs
