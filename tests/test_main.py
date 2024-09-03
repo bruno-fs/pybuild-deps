@@ -57,6 +57,27 @@ def test_main_succeeds(runner: CliRunner) -> None:
                 "setuptools-rust>=0.11.4",
             ],
         ),
+        (
+            "cryptography",
+            "git+https://github.com/pyca/cryptography@41.0.5",
+            [
+                "setuptools>=61.0.0",
+                "wheel",
+                "cffi>=1.12; platform_python_implementation != 'PyPy'",
+                "setuptools-rust>=0.11.4",
+            ],
+        ),
+        (
+            "cryptography",
+            "https://github.com/pyca/cryptography/archive/refs/tags/43.0.0.tar.gz",
+            [
+                "maturin>=1,<2",
+                "cffi>=1.12; platform_python_implementation != 'PyPy'",
+                "setuptools",
+            ],
+        ),
+        ("azure-identity", "1.14.1", []),
+        ("debugpy", "1.8.5", ["wheel", "setuptools"]),
     ],
 )
 def test_find_build_deps(
@@ -68,7 +89,7 @@ def test_find_build_deps(
     assert result.exit_code == 0
     assert result.stdout.splitlines() == expected_deps
     assert cache.exists()
-    # repeating the same test to cover a cached version
+    # repeating the same test to cover the cached version
     result = runner.invoke(main.cli, args=["find-build-deps", package_name, version])
     assert result.exit_code == 0
     assert result.stdout.splitlines() == expected_deps
@@ -90,12 +111,17 @@ def test_find_build_deps(
         (
             "some-package",
             "git+https://example.com",
-            "Unsupported requirement (some-package @ git+https://example.com). Url requirements must use a VCS scheme like 'git+https'.",  # noqa: E501
+            "Unsupported requirement 'some-package@ git+https://example.com'. Requirement must be either pinned (==), a vcs link with sha or a direct url.",  # noqa: E501
+        ),
+        (
+            "some-package",
+            "https://example.com",
+            "Unable to unpack 'some-package@ https://example.com'. Is 'https://example.com' a python package?",  # noqa: E501
         ),
         (
             "cryptography",
             "git+https://github.com/pyca/cryptography",
-            "Unsupported requirement (cryptography @ git+https://github.com/pyca/cryptography). Url requirements must use a VCS scheme like 'git+https'.",  # noqa: E501
+            "Unsupported requirement 'cryptography@ git+https://github.com/pyca/cryptography'. Requirement must be either pinned (==), a vcs link with sha or a direct url.",  # noqa: E501
         ),
     ],
 )

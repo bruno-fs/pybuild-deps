@@ -3,7 +3,7 @@
 import pytest
 from pip._internal.req.constructors import install_req_from_req_string
 
-from pybuild_deps.utils import get_version, is_pinned_requirement
+from pybuild_deps.utils import get_version, is_supported_requirement
 
 
 @pytest.mark.parametrize(
@@ -16,7 +16,7 @@ from pybuild_deps.utils import get_version, is_pinned_requirement
 def test_is_pinned_or_vcs(req):
     """Ensure pinned or vcs dependencies are properly detected."""
     ireq = install_req_from_req_string(req)
-    assert is_pinned_requirement(ireq)
+    assert is_supported_requirement(ireq)
 
 
 @pytest.mark.parametrize(
@@ -24,15 +24,13 @@ def test_is_pinned_or_vcs(req):
     [
         "requests>1.2.3",
         "requests @ git+https://github.com/psf/requests",
-        "requests @ https://example.com",
-        "requests @ https://github.com/psf/requests@some-commit-sha",
         "requests",
     ],
 )
 def test_not_pinned_or_vcs(req):
     """Negative test for 'is_pinned_or_vcs'."""
     ireq = install_req_from_req_string(req)
-    assert not is_pinned_requirement(ireq)
+    assert not is_supported_requirement(ireq)
 
 
 def test_get_version_url():

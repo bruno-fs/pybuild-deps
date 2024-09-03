@@ -1,5 +1,7 @@
 """Get source code for a given package."""
 
+from __future__ import annotations
+
 import logging
 import tarfile
 from pathlib import Path
@@ -7,15 +9,21 @@ from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
 
 import requests
-from pip._internal.operations.prepare import unpack_vcs_link
+from pip._internal.exceptions import InstallationError
+from pip._internal.network.download import Downloader
+from pip._internal.network.session import PipSession
+from pip._internal.operations.prepare import unpack_url
 from pip._internal.req.constructors import install_req_from_req_string
+from pip._internal.utils.temp_dir import global_tempdir_manager
 
 from pybuild_deps.constants import CACHE_PATH
 from pybuild_deps.exceptions import PyBuildDepsError
-from pybuild_deps.utils import is_pinned_vcs
+from pybuild_deps.utils import is_supported_requirement
 
 
-def get_package_source(package_name: str, version: str) -> Path:
+def get_package_source(
+    package_name: str, version: str, pip_session: PipSession | None = None
+) -> Path:
     """Get source code for a given package."""
     parsed_url = urlparse(version)
     is_url = all((parsed_url.scheme, parsed_url.netloc))
@@ -39,51 +47,51 @@ def get_package_source(package_name: str, version: str) -> Path:
     elif error_path.exists():
         raise NotImplementedError()
 
-    if is_url:
-        # assume url is pointing to VCS - if it's not an error will be thrown later
-        return retrieve_and_save_source_from_vcs(
-            package_name, version, tarball_path=tarball_path, error_path=error_path
-        )
+    url = version if is_url else get_source_url_from_pypi(package_name, version)
 
-    return retrieve_and_save_source_from_pypi(
-        package_name, version, tarball_path=tarball_path, error_path=error_path
+    return retrieve_and_save_source_from_url(
+        package_name,
+        url,
+        tarball_path=tarball_path,
+        error_path=error_path,
+        pip_session=pip_session,
     )
 
 
-def retrieve_and_save_source_from_pypi(
+def retrieve_and_save_source_from_url(
     package_name: str,
-    version: str,
+    url: str,
     *,
     tarball_path: Path,
     error_path: Path,
+    pip_session: PipSession = None,
 ):
-    """Retrieve package source from pypi and store it in a cache."""
-    source_url = get_source_url_from_pypi(package_name, version)
-    response = requests.get(source_url, timeout=10)
-    response.raise_for_status()
-    tarball_path.parent.mkdir(parents=True, exist_ok=True)
-    tarball_path.write_bytes(response.content)
-    return tarball_path
-
-
-def retrieve_and_save_source_from_vcs(
-    package_name: str,
-    version: str,
-    *,
-    tarball_path: Path,
-    error_path: Path,
-):
-    """Retrieve package source from VCS."""
-    ireq = install_req_from_req_string(f"{package_name} @ {version}")
-    if not is_pinned_vcs(ireq):
+    """Retrieve package source from URL."""
+    ireq = install_req_from_req_string(f"{package_name} @ {url}")
+    if not is_supported_requirement(ireq):
         raise PyBuildDepsError(
-            f"Unsupported requirement ({ireq.name} @ {ireq.link}). Url requirements "
-            "must use a VCS scheme like 'git+https'."
+            f"Unsupported requirement '{ireq.req}'. Requirement must be either pinned "
+            "(==), a vcs link with sha or a direct url."
         )
-    tarball_path.parent.mkdir(parents=True, exist_ok=True)
-    with TemporaryDirectory() as tmp_dir, tarfile.open(tarball_path, "w") as tarball:
-        unpack_vcs_link(ireq.link, tmp_dir, verbosity=0)
-        tarball.add(tmp_dir, arcname=package_name)
+
+    pip_session = pip_session or PipSession()
+    pip_downloader = Downloader(pip_session, "")
+
+    with global_tempdir_manager(), TemporaryDirectory() as tmp_dir:
+        try:
+            unpack_url(
+                ireq.link,
+                tmp_dir,
+                download=pip_downloader,
+                verbosity=0,
+            )
+        except InstallationError as err:
+            raise PyBuildDepsError(
+                f"Unable to unpack '{ireq.req}'. Is '{ireq.link}' a python package?"
+            ) from err
+        tarball_path.parent.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(tarball_path, "w:gz") as tarball:
+            tarball.add(tmp_dir, arcname=package_name)
     return tarball_path
 
 

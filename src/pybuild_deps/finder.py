@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import tarfile
 
+from pip._internal.network.session import PipSession
+
 from pybuild_deps.parsers.setup_py import SetupPyParsingError
 
 from .logger import log
@@ -12,7 +14,10 @@ from .source import get_package_source
 
 
 def find_build_dependencies(
-    package_name, version, raise_setuppy_parsing_exc=True
+    package_name,
+    version,
+    raise_setuppy_parsing_exc=True,
+    pip_session: PipSession | None = None,
 ) -> list[str]:
     """Find build dependencies for a given package."""
     file_parser_map = {
@@ -21,7 +26,7 @@ def find_build_dependencies(
         "setup.py": parse_setup_py,
     }
     log.debug(f"retrieving source for package {package_name}=={version}")
-    source_path = get_package_source(package_name, version)
+    source_path = get_package_source(package_name, version, pip_session=pip_session)
     build_dependencies = []
     with tarfile.open(fileobj=source_path.open("rb")) as tarball:
         for file_name, parser in file_parser_map.items():

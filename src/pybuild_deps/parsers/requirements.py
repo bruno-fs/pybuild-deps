@@ -14,7 +14,7 @@ from pip._internal.req.constructors import (
 )
 
 from pybuild_deps.exceptions import PyBuildDepsError
-from pybuild_deps.utils import is_pinned_requirement
+from pybuild_deps.utils import is_supported_requirement
 
 
 def parse_requirements(
@@ -31,7 +31,7 @@ def parse_requirements(
         filename, session, finder=finder, options=options, constraint=constraint
     ):
         ireq = install_req_from_parsed_requirement(parsed_req, isolated=isolated)
-        if not is_pinned_requirement(ireq):
+        if not is_supported_requirement(ireq):
             raise PyBuildDepsError(
                 f"requirement '{ireq}' is not exact "
                 "(pybuild-tools only supports pinned dependencies)."
