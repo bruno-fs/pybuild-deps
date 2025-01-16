@@ -179,10 +179,10 @@ class BuildDependencyCompiler:
             yield install_req_from_req_string(build_dep, comes_from=ireq.name)
 
 
-def deduplicate_install_requirements(ireqs: Iterable[InstallRequirement]):
+def deduplicate_install_requirements(_ireqs: Iterable[InstallRequirement]):
     """Deduplicate InstallRequirements."""
     unique_ireqs = {}
-    for ireq in ireqs:
+    for ireq in _ireqs:
         req_tuple = ireq.name, get_version(ireq)
         if req_tuple not in unique_ireqs:
             # NOTE: piptools hacks pip's InstallRequirement to allow support from
@@ -190,8 +190,9 @@ def deduplicate_install_requirements(ireqs: Iterable[InstallRequirement]):
             # use this information.
             # https://github.com/jazzband/pip-tools/blob/53309647980e2a4981db54c0033f98c61142de0b/piptools/resolver.py#L118-L122
             # https://github.com/jazzband/pip-tools/blob/53309647980e2a4981db54c0033f98c61142de0b/piptools/writer.py#L309-L314
-            ireq._source_ireqs = getattr(ireq, "_source_ireqs", [ireq])
+            ireq._source_ireqs = set(getattr(ireq, "_source_ireqs", {ireq}))
             unique_ireqs[req_tuple] = ireq
         else:
-            unique_ireqs[req_tuple]._source_ireqs.append(ireq)
+            _ireqs = set(getattr(ireq, "_source_ireqs", {ireq}))
+            unique_ireqs[req_tuple]._source_ireqs |= _ireqs
     return set(unique_ireqs.values())
