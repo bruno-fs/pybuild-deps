@@ -1,5 +1,6 @@
 """Test cases for the __main__ module."""
 
+import traceback
 from os import chdir
 from pathlib import Path
 
@@ -86,7 +87,7 @@ def test_find_build_deps(
     """End to end testing for find-build-deps command."""
     assert not cache.exists()
     result = runner.invoke(main.cli, args=["find-build-deps", package_name, version])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, traceback.print_tb(result.exc_info[2])
     assert result.stdout.splitlines() == expected_deps
     assert cache.exists()
     # repeating the same test to cover the cached version

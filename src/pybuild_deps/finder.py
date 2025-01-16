@@ -5,8 +5,11 @@ from __future__ import annotations
 import tarfile
 
 from pip._internal.network.session import PipSession
+from pip._internal.req import InstallRequirement
 
+from pybuild_deps.exceptions import PyBuildDepsError
 from pybuild_deps.parsers.setup_py import SetupPyParsingError
+from pybuild_deps.utils import is_supported_requirement
 
 from .logger import log
 from .parsers import parse_pyproject_toml, parse_setup_cfg, parse_setup_py
@@ -14,8 +17,7 @@ from .source import get_package_source
 
 
 def find_build_dependencies(
-    package_name,
-    version,
+    ireq: InstallRequirement,
     raise_setuppy_parsing_exc=True,
     pip_session: PipSession | None = None,
 ) -> list[str]:
@@ -25,8 +27,12 @@ def find_build_dependencies(
         "setup.cfg": parse_setup_cfg,
         "setup.py": parse_setup_py,
     }
-    log.debug(f"retrieving source for package {package_name}=={version}")
-    source_path = get_package_source(package_name, version, pip_session=pip_session)
+
+    if not is_supported_requirement(ireq):
+        raise PyBuildDepsError(f"requirement '{ireq}' is not exact.")
+
+    log.debug(f"retrieving source for package {ireq}")
+    source_path = get_package_source(ireq, pip_session=pip_session)
     build_dependencies = []
     with tarfile.open(fileobj=source_path.open("rb")) as tarball:
         for file_name, parser in file_parser_map.items():
@@ -35,11 +41,11 @@ def find_build_dependencies(
                 file = tarball.extractfile(f"{root_dir}/{file_name}")
             except KeyError:
                 log.debug(
-                    f"{file_name} file not found for package {package_name}=={version}",
+                    f"{file_name} file not found for package {ireq}",
                 )
                 continue
             log.debug(
-                f"parsing file {file_name} for package {package_name}=={version}",
+                f"parsing file {file_name} for package {ireq}",
             )
             # utf-8-sig is required due to a very odd edge case I found with
             # package msal==1.24.1: it had a non printable character U+FEFF, which
@@ -52,9 +58,7 @@ def find_build_dependencies(
             try:
                 build_dependencies += parser(file_contents)
             except SetupPyParsingError:
-                error_msg = (
-                    f"Unable to parse setup.py for package {package_name}=={version}."
-                )
+                error_msg = f"Unable to parse setup.py for package {ireq}."
                 if not raise_setuppy_parsing_exc:
                     log.error(error_msg)
                 log.debug("{:=^80}".format(" setup.py contents "))

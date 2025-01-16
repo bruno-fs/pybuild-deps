@@ -89,6 +89,7 @@ class BuildDependencyCompiler:
         constraints: dict[str, InstallRequirement],
     ) -> set[InstallRequirement]:
         # find build dependencies for ireq
+        log.info(ireq)
         build_ireqs = set(self._find_build_dependencies(ireq))
         if not build_ireqs:
             return set()
@@ -165,10 +166,8 @@ class BuildDependencyCompiler:
         ireq: InstallRequirement,
     ) -> Generator[InstallRequirement]:
         """Find build dependencies for a given ireq."""
-        ireq_version = get_version(ireq)
         for build_dep in find_build_dependencies(
-            ireq.name,
-            ireq_version,
+            ireq,
             raise_setuppy_parsing_exc=False,
             pip_session=self.repository.session,
         ):

@@ -12,6 +12,8 @@ def get_version(ireq: InstallRequirement):
     """Get version string from InstallRequirement."""
     if not is_supported_requirement(ireq):
         raise PyBuildDepsError(f"requirement '{ireq}' is not exact.")
+    # if ireq.link.scheme == "file":
+    #     return ireq.link.url
     if ireq.req.url:
         return ireq.req.url
     return next(iter(ireq.specifier)).version

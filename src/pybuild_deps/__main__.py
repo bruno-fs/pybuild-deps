@@ -1,8 +1,10 @@
 """Command-line interface."""
 
 import sys
+from urllib.parse import urlparse
 
 import click
+from pip._internal.req.constructors import install_req_from_req_string
 
 from pybuild_deps.exceptions import PyBuildDepsError
 
@@ -25,11 +27,18 @@ def cli() -> None:
 def find_build_deps(package_name, package_version, verbose):
     """Find build dependencies for given package."""
     log.verbosity = verbose
+    parsed_url = urlparse(package_version)
+    is_url = all((parsed_url.scheme, parsed_url.netloc))
+
+    if is_url:
+        req = f"{package_name} @ {package_version}"
+    else:
+        req = f"{package_name}=={package_version}"
+
+    ireq = install_req_from_req_string(req)
 
     try:
-        deps = find_build_dependencies(
-            package_name=package_name, version=package_version
-        )
+        deps = find_build_dependencies(ireq)
     except PyBuildDepsError as err:
         log.error(str(err))
         sys.exit(2)
