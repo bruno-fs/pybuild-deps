@@ -1,5 +1,6 @@
 """Test cases for the __main__ module."""
 
+import traceback
 from os import chdir
 from pathlib import Path
 
@@ -146,7 +147,7 @@ def test_compile_greenpath(
     result = runner.invoke(
         main.cli, args=["compile", str(requirements_path), "-o", str(output)]
     )
-    assert result.exit_code == 0
+    assert result.exit_code == 0, traceback.print_tb(result.exc_info[2])
     expected_packages = {"setuptools-rust", "setuptools-scm"}
     build_requirements = list(parse_requirements(str(output), pypi_repo.session))
     assert expected_packages.issubset({r.name for r in build_requirements})
