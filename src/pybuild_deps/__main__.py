@@ -8,7 +8,7 @@ from pybuild_deps.exceptions import PyBuildDepsError
 
 from .finder import find_build_dependencies
 from .logger import log
-from .scripts import compile
+from .scripts import compile, rusted
 
 
 @click.group()
@@ -38,6 +38,7 @@ def find_build_deps(package_name, package_version, verbose):
 
 
 cli.add_command(compile.compile, "compile")
+cli.add_command(rusted.lock, "rusted-lock")
 
 if __name__ == "__main__":
     cli(prog_name="pybuild-deps")  # pragma: no cover

@@ -1,14 +1,9 @@
 """Parsers for PyBuild Deps."""
 
+import re
 from configparser import ConfigParser
 
-
-try:
-    import tomllib as toml
-except ImportError:
-    import tomli as toml
-import re
-
+from ..compat import toml
 from .requirements import parse_requirements
 from .setup_py import (
     SetupPyParsingError,
