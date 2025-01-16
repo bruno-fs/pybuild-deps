@@ -108,7 +108,7 @@ def lock(
     cargo_dependencies = list(_deps_as_dict.values())
     log.info(f"Collected {len(cargo_dependencies)} cargo dependencies.")
     # format artifact.lock.yaml structure
-    artifact_lock = {"metadata": "1.0", "artifacts": cargo_dependencies}
+    artifact_lock = {"metadata": {"version": "1.0"}, "artifacts": cargo_dependencies}
     lock_contents = yaml.dump(artifact_lock, indent=2, sort_keys=False)
     output_file.write(lock_contents.encode())
 
