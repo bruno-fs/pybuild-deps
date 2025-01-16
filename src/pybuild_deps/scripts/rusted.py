@@ -23,6 +23,7 @@ from pybuild_deps.utils import get_version
 
 from ..compat import toml
 
+
 REQUIREMENTS_TXT = "requirements.txt"
 
 
