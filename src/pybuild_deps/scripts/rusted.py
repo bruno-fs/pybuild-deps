@@ -62,15 +62,20 @@ def lock(
     cache_dir: Path,
 ) -> None:
     """
-    Generates a lockfile of rust transitive dependencies.
+    Generate a lockfile of Rust transitive dependencies.
 
-    Rust transitive dependencies detection is reliant on the presence
-    of either maturin or setuptools-rust as build dependencies of a package. Packages
-    without those transitive dependencies are ignored. Also, for setuptools-rust, newer
-    versions with configuration set on pyproject.toml are better supported.
+    This function analyzes the build dependencies of requirements files to detect Rust
+    transitive dependencies. It relies on the presence of either maturin or
+    setuptools-rust as build dependencies. If neither of these dependencies is present,
+    the package is ignored.
 
-    Currently the file follows the generic cachi2 artifacts.lock.yml format. This might
-    change in the future when proper rust support is added to cachi2.
+    For setuptools-rust, this function supports newer versions that use configuration
+    settings in pyproject.toml. This allows for more accurate detection of Rust
+    transitive dependencies.
+
+    The generated lockfile is in the cachi2 artifacts.lock.yml format, which is a
+    generic format for locking dependencies. However, this format may change in the
+    future when Rust support is fully integrated into cachi2.
     """
     log.verbosity = verbose - quiet
     if len(src_files) == 0:
