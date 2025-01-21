@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import optparse
-from typing import Generator
+from collections.abc import Generator
 
 from pip._internal.index.package_finder import PackageFinder
 from pip._internal.network.session import PipSession
