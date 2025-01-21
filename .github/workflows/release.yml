@@ -10,6 +10,12 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pybuild-deps
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+      contents: write # Required for pushing tags - https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#permissions
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -19,7 +25,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5.2.0
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Upgrade pip
         run: |
@@ -34,21 +40,28 @@ jobs:
       - name: Check if there is a parent commit
         id: check-parent-commit
         run: |
-          echo "::set-output name=sha::$(git rev-parse --verify --quiet HEAD^)"
+          echo "sha=$(git rev-parse --verify --quiet HEAD^)" >> $GITHUB_OUTPUT
 
-      - name: Detect and tag new version
+      - name: Check version
         id: check-version
         if: steps.check-parent-commit.outputs.sha
-        uses: salsify/action-detect-and-tag-new-version@v2.0.3
+        run: |
+          echo "version=$(poetry version -s)" >> $GITHUB_OUTPUT
+
+      - name: Tag new version if it doesn't exist
+        id: tag-version
+        if: steps.check-version.outputs.version
+        uses: bruno-fs/repo-tagger@1.0.0
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
-          version-command: |
-            bash -o pipefail -c "poetry version | awk '{ print \$2 }'"
+          tag: "${{ steps.check-version.outputs.version }}"
 
       - name: Bump version for developmental release
-        if: "! steps.check-version.outputs.tag"
+        if: "! steps.tag-version.outputs.tag"
         run: |
           poetry version patch &&
-          version=$(poetry version | awk '{ print $2 }') &&
+          version=$(poetry version -s) &&
           poetry version $version.dev.$(date +%s)
 
       - name: Build package
@@ -56,24 +69,19 @@ jobs:
           poetry build --ansi
 
       - name: Publish package on PyPI
-        if: steps.check-version.outputs.tag
+        if: steps.tag-version.outputs.tag
         uses: pypa/gh-action-pypi-publish@v1.10.0
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
 
       - name: Publish package on TestPyPI
-        if: "! steps.check-version.outputs.tag"
+        if: "! steps.tag-version.outputs.tag"
         uses: pypa/gh-action-pypi-publish@v1.10.0
         with:
-          user: __token__
-          password: ${{ secrets.TEST_PYPI_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/
 
       - name: Publish the release notes
         uses: release-drafter/release-drafter@v6.0.0
         with:
-          publish: ${{ steps.check-version.outputs.tag != '' }}
-          tag: ${{ steps.check-version.outputs.tag }}
+          publish: ${{ steps.tag-version.outputs.tag != '' }}
+          tag: ${{ steps.tag-version.outputs.tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

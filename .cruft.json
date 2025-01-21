@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/bruno-fs/cookiecutter-hypermodern-python",
-  "commit": "6e269e4d703f1e10f38c65a323b48cbe2980e9d3",
+  "commit": "9a33baca1ac399f2ba0fd9e94212ef0528a6a6a3",
   "checkout": null,
   "skip": ["poetry.lock"],
   "context": {
