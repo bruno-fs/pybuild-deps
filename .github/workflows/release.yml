@@ -70,11 +70,11 @@ jobs:
 
       - name: Publish package on PyPI
         if: steps.tag-version.outputs.tag
-        uses: pypa/gh-action-pypi-publish@v1.10.0
+        uses: pypa/gh-action-pypi-publish@v1.12.4
 
       - name: Publish package on TestPyPI
         if: "! steps.tag-version.outputs.tag"
-        uses: pypa/gh-action-pypi-publish@v1.10.0
+        uses: pypa/gh-action-pypi-publish@v1.12.4
         with:
           repository-url: https://test.pypi.org/legacy/
 
