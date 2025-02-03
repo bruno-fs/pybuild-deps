@@ -16,7 +16,7 @@ from piptools.utils import get_compile_command as _get_compile_command
 from piptools.utils import (
     key_from_ireq,
 )
-from piptools.writer import OutputWriter
+from piptools.writer import OutputWriter as PipToolsWriter
 
 from pybuild_deps.compile_build_dependencies import (
     BuildDependencyCompiler,
@@ -25,6 +25,7 @@ from pybuild_deps.constants import PIP_CACHE_DIR
 from pybuild_deps.exceptions import PyBuildDepsError
 from pybuild_deps.logger import log
 from pybuild_deps.parsers import parse_requirements
+from pybuild_deps.utils import get_version
 
 
 REQUIREMENTS_TXT = "requirements.txt"
@@ -189,3 +190,10 @@ def _handle_src_files():
         )
 
     return src_files
+
+
+class OutputWriter(PipToolsWriter):
+    """pip-tools OutputWriter with customizations for pybuild-deps."""
+
+    def _sort_key(self, ireq: InstallRequirement) -> tuple[bool, str]:
+        return (not ireq.editable, f"{ireq.name}=={get_version(ireq)}")

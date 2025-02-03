@@ -229,3 +229,26 @@ def test_compile_unsolvable_dependencies(runner: CliRunner, tmp_path: Path, mock
     )
     assert "setuptools>=42" in result.stderr
     assert "setuptools<42" in result.stderr
+
+
+def test_compile_consistent_ordering(runner: CliRunner, tmp_path: Path):
+    """Test ensuring ordering is consistent in compile results."""
+    chdir(tmp_path)
+    # these dependencies were the minimalist example I found to reproduce the ordering
+    # issue. lxml depends on Cython>=3.0.11, while pyyaml depends on Cython<3.0. This
+    # causes the resolution of 2 distinct versions of Cython which, without the bugfix,
+    # will appear in a random order in the output file
+    requirements = ["lxml==5.3.0", "pyyaml==6.0.1"]
+    requirements_path: Path = tmp_path / "requirements.txt"
+    requirements_path.write_text("\n".join(requirements))
+    outfile1 = tmp_path / "outfile1"
+    result1 = runner.invoke(
+        main.cli, args=["compile", "--no-header", "-o", str(outfile1)]
+    )
+    assert result1.exit_code == 0
+    outfile2 = tmp_path / "outfile2"
+    result2 = runner.invoke(
+        main.cli, args=["compile", "--no-header", "-o", str(outfile2)]
+    )
+    assert result2.exit_code == 0
+    assert outfile1.read_text() == outfile2.read_text()
