@@ -11,14 +11,14 @@ from piptools.repositories import PyPIRepository
 
 from pybuild_deps import __main__ as main
 from pybuild_deps.compile_build_dependencies import BuildDependencyCompiler
-from pybuild_deps.constants import PIP_CACHE_DIR
+from pybuild_deps.constants import PIPTOOLS_CACHE_DIR
 from pybuild_deps.parsers import parse_requirements
 
 
 @pytest.fixture
 def pypi_repo():
     """PyPIRepository instance for testing."""
-    return PyPIRepository([], cache_dir=PIP_CACHE_DIR)
+    return PyPIRepository([], cache_dir=PIPTOOLS_CACHE_DIR)
 
 
 @pytest.fixture
