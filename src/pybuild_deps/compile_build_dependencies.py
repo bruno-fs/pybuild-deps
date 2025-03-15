@@ -83,6 +83,7 @@ class BuildDependencyCompiler:
 
         return deduplicate_install_requirements(all_build_deps)
 
+    # @persistent_cache(CACHE_PATH / "resolve-build-deps-for-ireq")
     def _resolve_build_deps_for_ireq(
         self,
         ireq: InstallRequirement,
