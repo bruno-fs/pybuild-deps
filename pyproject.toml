@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pybuild-deps"
-version = "0.4.1"
+version = "0.5.0"
 description = "A simple tool for detection of PEP-517 build dependencies."
 authors = ["Bruno Ciconelle <bciconel@redhat.com>"]
 license = "GPL-3.0"
