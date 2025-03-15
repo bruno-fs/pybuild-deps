@@ -21,7 +21,7 @@ from piptools.writer import OutputWriter as PipToolsWriter
 from pybuild_deps.compile_build_dependencies import (
     BuildDependencyCompiler,
 )
-from pybuild_deps.constants import PIP_CACHE_DIR
+from pybuild_deps.constants import PIPTOOLS_CACHE_DIR
 from pybuild_deps.exceptions import PyBuildDepsError
 from pybuild_deps.logger import log
 from pybuild_deps.parsers import parse_requirements
@@ -83,14 +83,6 @@ def get_compile_command(click_ctx):
     help="Generate pip 8 style hashes in the resulting requirements file.",
 )
 @click.argument("src_files", nargs=-1, type=click.Path(exists=True, allow_dash=False))
-@click.option(
-    "--cache-dir",
-    help="Store the cache data in DIRECTORY.",
-    default=PIP_CACHE_DIR,
-    show_default=True,
-    show_envvar=True,
-    type=click.Path(file_okay=False, writable=True),
-)
 def compile(
     ctx: click.Context,
     verbose: int,
@@ -102,7 +94,6 @@ def compile(
     output_file: LazyFile | IO[Any] | None,
     generate_hashes: bool,
     src_files: tuple[str, ...],
-    cache_dir: Path,
 ) -> None:
     """Compiles build-requirements.txt from requirements.txt."""
     log.verbosity = verbose - quiet
@@ -112,7 +103,7 @@ def compile(
         log.warning("No output file (-o) specified. Defaulting to 'dry run' mode.")
         dry_run = True
 
-    repository = PyPIRepository([], cache_dir=cache_dir)
+    repository = PyPIRepository([], cache_dir=PIPTOOLS_CACHE_DIR)
 
     dependencies: list[InstallRequirement] = []
     for src_file in src_files:

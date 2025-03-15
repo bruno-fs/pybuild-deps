@@ -7,14 +7,14 @@ from pip._internal.req.constructors import install_req_from_req_string
 from piptools.repositories import PyPIRepository
 
 from pybuild_deps.compile_build_dependencies import BuildDependencyCompiler
-from pybuild_deps.constants import PIP_CACHE_DIR
+from pybuild_deps.constants import PIPTOOLS_CACHE_DIR
 from pybuild_deps.exceptions import PyBuildDepsError, UnsolvableDependenciesError
 
 
 @pytest.fixture
 def compiler() -> BuildDependencyCompiler:
     """BuildDependencyCompiler instance."""
-    repo = PyPIRepository([], cache_dir=PIP_CACHE_DIR)
+    repo = PyPIRepository([], cache_dir=PIPTOOLS_CACHE_DIR)
     return BuildDependencyCompiler(repo)
 
 
