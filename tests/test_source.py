@@ -2,18 +2,7 @@
 
 from pathlib import Path
 
-import pytest
-from piptools.repositories import PyPIRepository
-
-from pybuild_deps.constants import PIP_CACHE_DIR
 from pybuild_deps.source import get_package_source
-
-
-@pytest.fixture
-def pypi_session():
-    """PyPISession instance."""
-    repo = PyPIRepository([], cache_dir=PIP_CACHE_DIR)
-    return repo.session
 
 
 def test_get_package_source(

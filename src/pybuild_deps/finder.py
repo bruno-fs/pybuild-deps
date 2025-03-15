@@ -6,13 +6,14 @@ import tarfile
 
 from pip._internal.network.session import PipSession
 
-from pybuild_deps.parsers.setup_py import SetupPyParsingError
-
+from .cache import persistent_cache
 from .logger import log
 from .parsers import parse_pyproject_toml, parse_setup_cfg, parse_setup_py
+from .parsers.setup_py import SetupPyParsingError
 from .source import get_package_source
 
 
+@persistent_cache("find-build-deps", ignore_kwargs=["pip_session"])
 def find_build_dependencies(
     package_name,
     version,

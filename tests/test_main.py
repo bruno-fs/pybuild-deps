@@ -180,7 +180,10 @@ def test_compile_implicit_requirements_txt_and_non_default_options(
     requirements_path.write_text("setuptools-rust==1.6.0")
     result = runner.invoke(main.cli, args=["compile", args])
     assert result.exit_code == 0
-    assert {file.name for file in cache.glob("*")} == {"setuptools", "setuptools-rust"}
+    assert {file.name for file in cache.glob("*") if file.is_dir()} == {
+        "setuptools",
+        "setuptools-rust",
+    }
 
 
 def test_compile_not_pinned_requirements_txt(runner: CliRunner, tmp_path: Path):
